@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# get inputs from "ngen" command
+selected_catchment=${1}
+selected_nexus=${3}
+selected_realization=${5}
+echo "Selected catchment: $selected_catchment"
+echo "Selected nexus: $selected_nexus"
+echo "Selected realization: $selected_realization"
+
+# Add the cache disabling param so ngen-cal doesn't need to be modified
+sed -i 's/"NetCDF"$/"NetCDF",\n            "enable_cache": false\n/' $selected_realization
+
+generate_partitions() {
+    python /dmod/utils/partitioning/local_only_partitions.py "$1" "$2" "."
+}
+
+procs=$(nproc)
+
+# the last line printed by the partitioning script is the number of partitions actually created
+procs=$(generate_partitions "$selected_catchment" "$procs"|tail -n 1)
+
+# if calibrating a large area, it would be best to save and reuse the partition file
+# generating it wastes iteration time 
+
+# run ngen in parallel
+mpirun -n $procs /dmod/bin/ngen-parallel $selected_catchment all $selected_nexus all $selected_realization $(pwd)/partitions_$procs.json
+
+exit 0
