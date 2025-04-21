@@ -1,4 +1,4 @@
-FROM joshcu/ngiab AS base
+FROM awiciroh/ciroh-ngen-image AS base
 RUN dnf install -y git gcc-c++ make cmake python3-devel python3-pip
 WORKDIR /calibration
 COPY ngen-cal /calibration/ngen-cal
