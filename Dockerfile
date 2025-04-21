@@ -12,6 +12,8 @@ RUN uv pip install numpy==1.26.0 netCDF4 geopandas==1.* xarray
 COPY mpi-ngen /dmod/bin/mpi-ngen
 
 RUN echo "/calibration/.venv/bin/python /calibration/ngen-cal/python/runCalibValid/calibration.py /ngen/ngen/data/calibration/ngen_cal_conf.yaml" >> run.sh
+RUN echo "/calibration/.venv/bin/python /calibration/ngen-cal/python/runCalibValid/validation.py /ngen/ngen/data/calibration/ngen_cal_conf.yaml" >> run.sh
+
 RUN chmod +x run.sh
 
 ENV VIRTUAL_ENV=/ngen/.venv/

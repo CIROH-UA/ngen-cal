@@ -200,6 +200,9 @@ def plot_valid_output(
     dfs1 = [calibration_object.observed, df_control, df_best]
     df_merged = reduce(lambda left, right: pd.merge(left, right, left_index=True, right_index=True, how='right'), dfs1)
     df_merged = df_merged.rename(columns={'obs_flow': 'Observation'})
+    # Convert the obsflow in cubic feet per second to cubic meters per second
+    df_merged['Observation'] = df_merged['Observation'] * 0.0283168
+    
     df_merged[['Control Run','Best Run']] = df_merged[['Control Run','Best Run']] 
     df_merged.reset_index(inplace=True)
     df_merged = df_merged.rename(columns={'index': 'Time'})
