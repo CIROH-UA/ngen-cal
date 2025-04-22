@@ -26,6 +26,8 @@ import yaml
 
 from .strategy import Objective
 
+import logging
+
 # additional constrained types
 PosInt = conint(gt=-1)
 
@@ -561,7 +563,7 @@ class EvaluationOptions(BaseModel):
     @validator("objective")
     def validate_objective(cls, value):
         if value is None:
-            print("Objective cannot be none -- setting default objective")
+            logging.warning("Objective cannot be none -- setting default objective")
             value = Objective.kge
         return value
 

@@ -10,6 +10,7 @@ from os import chdir
 from pathlib import Path
 
 import yaml
+from custom_logging import setup_logging
 from ngen.cal.agent import Agent
 from ngen.cal.configuration import General
 from ngen.cal.validation_run import run_valid_ctrl_best
@@ -35,6 +36,8 @@ def main(general: General, model_conf):
 
 
 if __name__ == "__main__":
+    setup_logging()
+
     # Create command line parser
     parser = argparse.ArgumentParser(description="Run Validation in NGEN architecture.")
     parser.add_argument(

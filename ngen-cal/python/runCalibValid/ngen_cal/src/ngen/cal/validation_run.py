@@ -17,6 +17,8 @@ from .utils import pushd, complete_msg
 
 if TYPE_CHECKING:
     from ngen.cal.agent import Agent
+    
+import logging
 
 
 def run_valid_ctrl_best(agent: 'Agent') -> None:
@@ -31,7 +33,7 @@ def run_valid_ctrl_best(agent: 'Agent') -> None:
     None
 
     """
-    print("---Start " + agent.run_name + "---")
+    logging.info("---Start " + agent.run_name + "---")
     shutil.copy(agent.realization_file, os.path.join(agent.job.workdir, os.path.basename(agent.realization_file)))
 
     # Calculate metrics

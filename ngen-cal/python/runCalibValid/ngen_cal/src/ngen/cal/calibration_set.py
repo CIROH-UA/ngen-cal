@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from pandas import DataFrame
     from .model import EvaluationOptions
 
+import logging
 
 class CalibrationSet(Evaluatable):
     """A HY_Features based catchment with additional calibration information/functionality."""
@@ -115,8 +116,7 @@ class CalibrationSet(Evaluatable):
             hydrograph = self._output
 
         except FileNotFoundError:
-            print("{} not found. Current working directory is {}".format(self._output_file, os.getcwd()))
-            print("Setting output to None")
+            logging.warning("Simulation output {} not found. Current working directory is {}".format(self._output_file, os.getcwd()))
             hydrograph = None
         except Exception as e:
             raise(e)

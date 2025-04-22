@@ -23,6 +23,8 @@ if TYPE_CHECKING:
     from ngen.cal.agent import Agent
     from ngen.cal import Evaluatable  
 
+import logging
+
 __all__ = ['plot_calib_output',
            'plot_valid_output',
            'plot_cost_func',
@@ -81,7 +83,7 @@ def plot_calib_output(
     
     df_merged[['Control Run','Best Run','Last Run']] = df_merged[['Control Run','Best Run','Last Run']] 
     if df_merged.empty:
-        print("WARNING: can't merge different runs")
+        logging.warning("can't merge different runs")
     if eval_range:
         df_merged = df_merged.loc[eval_range[0]:eval_range[1]]
     df_merged.reset_index(inplace=True)

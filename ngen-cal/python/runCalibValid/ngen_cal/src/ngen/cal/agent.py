@@ -19,6 +19,8 @@ from ngen.cal.meta import JobMeta
 from .configuration import Model
 from .utils import pushd
 
+import logging
+
 if TYPE_CHECKING:
     from typing import Sequence, Mapping, Any
     from pandas import DataFrame
@@ -38,7 +40,7 @@ class BaseAgent(ABC):
                 starts.append(adjustable.restart())
         if all( x == starts[0] for x in starts):
             #if everyone agrees on the iteration...
-            print('restart iteration from ', starts[0])
+            logging.info('restart iteration from ', starts[0])
             return starts[0]
         else:
             return 0
@@ -95,7 +97,7 @@ class Agent(BaseAgent):
             # similar data semantics
             workdirs = list(Path(workdir).rglob(model_conf['type']+"_*_worker"))
             if( len(workdirs) > 1 and self._algorithm=="pso") :
-                print("More than one existing {} workdir, cannot restart")
+                logging.error("More than one existing {} workdir, cannot restart")
             else:
                 self._job = JobMeta(model_conf['type'], workdir, workdirs[agent_counter], log=log)
 
@@ -120,7 +122,7 @@ class Agent(BaseAgent):
             self._plot_iter_path = None 
 
         model_conf['workdir'] = self.job.workdir
-        print(model_conf)
+        logging.info(model_conf)
         try:
             self._model = Model(model=model_conf)
         except ValidationError as e:

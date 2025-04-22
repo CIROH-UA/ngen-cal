@@ -4,9 +4,7 @@ from pathlib import Path
 from sys import platform
 
 import logging
-logger = logging.getLogger('bmi_formulation')
-logger.addHandler(logging.StreamHandler())
-logger.setLevel(logging.INFO)
+
 
 class BMIParams(BaseModel, smart_union=True, allow_population_by_field_name = True):
     """The base of all BMI paramterized ngen model configurations.

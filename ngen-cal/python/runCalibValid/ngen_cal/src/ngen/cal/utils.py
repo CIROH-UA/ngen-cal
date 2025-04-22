@@ -10,6 +10,8 @@ from os import getcwd, chdir, PathLike
 import smtplib
 from typing import Union
 
+import logging
+
 @contextmanager
 def pushd(path: Union[str, PathLike]) -> None:
     """Change current working directory to the given path.
@@ -60,8 +62,8 @@ def complete_msg(basinid: str, run_name: str, path: Union[str, PathLike]=None, u
                 server = smtplib.SMTP('foo-server-name')
                 server.sendmail(msg['From'], user_email, msg.as_string())
             except Exception as e:
-                print(e)
-                print('completion email ' + 'for {}'.format(basinid) + "can't be sent")
+                logging.error(e)
+                logging.error('completion email ' + 'for {}'.format(basinid) + "can't be sent")
             finally:
                 server.quit()
         else:

@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+import logging
+
 __all__ = ['plot_streamflow',
            'plot_streamflow_precipitation',
            'scatterplot_streamflow',
@@ -51,7 +53,7 @@ def plot_streamflow(
     None
     """
 
-    print('---Plotting Streamflow Time Series---')
+    logging.info('---Plotting Streamflow Time Series---')
 
     # Obtain column names
     colname = list(df.columns)
@@ -119,7 +121,7 @@ def plot_streamflow_precipitation(
     None
 
     """
-    print('---Plotting Streamflow Time Series with Precipitation---')
+    logging.info('---Plotting Streamflow Time Series with Precipitation---')
 
     # Obtain column names
     colname = list(df.columns)
@@ -213,7 +215,7 @@ def scatterplot_streamflow(
     None
 
     """
-    print('---Plotting Scatterplot of Streamflow between Observation and Other Runs---')
+    logging.info('---Plotting Scatterplot of Streamflow between Observation and Other Runs---')
 
     # Obtain column names and value range
     colname = list(df.columns)
@@ -262,7 +264,7 @@ def plot_output(
     None
 
     """
-    print('---Plotting Output from Different Runs---')
+    logging.info('---Plotting Output from Different Runs---')
 
     # Change date column to datetime dtype
     ts = pd.DatetimeIndex(df['Time'])
@@ -346,7 +348,7 @@ def scatterplot_objfun(
     None
 
     """
-    print('---Plotting Scatterplot between Objective Funtion and Iteration---')
+    logging.info('---Plotting Scatterplot between Objective Funtion and Iteration---')
 
     # Read file
     df = pd.read_csv(metric_file)
@@ -399,7 +401,7 @@ def scatterplot_var(
     None
 
     """
-    print('---Plotting Scatterplot between Variables and Iteration---')
+    logging.info('---Plotting Scatterplot between Variables and Iteration---')
 
     # Read file
     df = pd.read_csv(var_file)
@@ -459,7 +461,7 @@ def scatterplot_objfun_metric(
     None
 
     """
-    print('---Plotting Scatterplot between Objective Function and Metric---')
+    logging.info('---Plotting Scatterplot between Objective Function and Metric---')
 
     # Read file
     df = pd.read_csv(var_file)
@@ -517,7 +519,7 @@ def barplot_metric(
     None
 
     """
-    print('---Plotting Barplot of Metrics---')
+    logging.info('---Plotting Barplot of Metrics---')
 
     # Set index
     allcols = list(df.columns)
@@ -585,7 +587,7 @@ def plot_fdc_calib(
     None
 
     """
-    print('---Plotting FDC of Observation and Other Runs---')
+    logging.info('---Plotting FDC of Observation and Other Runs---')
 
     # Figure arguments
     colname = list(df.columns)[1:]
@@ -638,7 +640,7 @@ def plot_fdc_valid(
     None
 
     """
-    print('---Plotting FDC of Observation and Other Runs---')
+    logging.info('---Plotting FDC of Observation and Other Runs---')
 
     # Figure arguments
     colname = list(df.columns)[1:]
@@ -702,7 +704,7 @@ def plot_cost_hist(
     None
 
     """
-    print('---Plotting Convergence Curve for Global and Local Best Values---')
+    logging.info('---Plotting Convergence Curve for Global and Local Best Values---')
 
     
     # Read file
