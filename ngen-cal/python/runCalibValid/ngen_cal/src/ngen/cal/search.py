@@ -16,6 +16,8 @@ from typing import Dict, Optional, Tuple, TYPE_CHECKING
 import numpy as np # type: ignore
 import pandas as pd # type: ignore
 
+from tqdm.rich import tqdm
+
 import logging
 
 from .gwo_global_best import GlobalBestGWO
@@ -215,7 +217,7 @@ def dds(start_iteration: int, iterations: int,  calibration_object: 'Evaluatable
         calibration_object.check_point(agent.job.workdir)
         start_iteration += 1
 
-    for i in range(start_iteration, iterations+1):
+    for i in tqdm(range(start_iteration, iterations+1)):
         # Calculate probability of inclusion
         inclusion_probability = 1 - log(i)/log(iterations)
         dds_update(i, inclusion_probability, calibration_object, agent)

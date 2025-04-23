@@ -10,7 +10,7 @@ RUN chmod -R 777 /calibration/ngen-cal
 RUN uv pip install -e ngen-cal/python/runCalibValid/ngen_cal
 RUN uv pip install -e ngen-cal/python/runCalibValid/ngen_conf
 RUN uv pip install numpy==1.26.0 netCDF4 geopandas==1.* xarray
-RUN uv pip install colorama
+RUN uv pip install colorama rich
 
 COPY mpi-ngen /dmod/bin/mpi-ngen
 

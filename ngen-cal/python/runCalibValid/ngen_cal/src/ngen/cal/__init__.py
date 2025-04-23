@@ -44,6 +44,10 @@ from .plot_functions import (
     plot_fdc_calib,
     plot_fdc_valid,
     plot_cost_hist,
-)          
+)
 
 from .validation_run import run_valid_ctrl_best
+
+from .custom_logging import setup_logging
+
+setup_logging()

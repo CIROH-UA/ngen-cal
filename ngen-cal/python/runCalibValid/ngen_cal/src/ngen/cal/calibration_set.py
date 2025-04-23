@@ -1,43 +1,46 @@
 """
 This module creates interface to adjust parameters, store
 observation, and save streamflow from calibration and validation
-runs and perform evaluation for a set of calibration catchments. 
+runs and perform evaluation for a set of calibration catchments.
 
 @author: Nels Frazer, Xia Feng
 """
 
 import glob
 import os
-from pathlib import Path
 import shutil
 import time
+from pathlib import Path
 from typing import TYPE_CHECKING, Sequence
 
 import netCDF4
 import pandas as pd
-from pandas import DataFrame# type: ignore
-
 from hypy.nexus import Nexus
+from pandas import DataFrame  # type: ignore
+
 from .calibratable import Adjustable, Evaluatable
 
 if TYPE_CHECKING:
     from datetime import datetime
     from pathlib import Path
     from typing import Tuple
+
     from pandas import DataFrame
+
     from .model import EvaluationOptions
 
 import logging
 
+
 class CalibrationSet(Evaluatable):
     """A HY_Features based catchment with additional calibration information/functionality."""
-    def __init__(self, 
-        adjustables: Sequence[Adjustable], 
+    def __init__(self,
+        adjustables: Sequence[Adjustable],
         eval_nexus: Nexus,
-        routing_output: 'Path', 
-        start_time: str, 
-        end_time: str, 
-        eval_params: 'EvaluationOptions', 
+        routing_output: 'Path',
+        start_time: str,
+        end_time: str,
+        eval_params: 'EvaluationOptions',
         obsflow_file: 'Path',
         wb_lst: list,
 ) -> None:
@@ -45,12 +48,12 @@ class CalibrationSet(Evaluatable):
 
         Parameters
         ----------
-        adjustables: Adjustable object 
-        eval_nexus : Obesrvable nexus ID 
+        adjustables: Adjustable object
+        eval_nexus : Obesrvable nexus ID
         routing_output : Routing output file
-        start_time : Starting simulation time 
-        end_time : Endig simulation time 
-        eval_params : EvaluationOptions object 
+        start_time : Starting simulation time
+        end_time : Endig simulation time
+        eval_params : EvaluationOptions object
         obsflow_file : Streamflow observation file
 
         """
@@ -65,7 +68,7 @@ class CalibrationSet(Evaluatable):
             obs['value_date'] = pd.DatetimeIndex(obs['value_date'])
             self._observed = obs.set_index('value_date')
         else:
-            # Otherwise pull observation from NWIS portal on-the-fly 
+            # Otherwise pull observation from NWIS portal on-the-fly
             obs =self._eval_nexus._hydro_location.get_data(start_time, end_time)
             self._observed = obs.set_index('value_time')['value'].resample('1H').nearest()
             self._observed.rename('obs_flow', inplace=True)
@@ -76,7 +79,7 @@ class CalibrationSet(Evaluatable):
         self._valid_eval_range = self.eval_params._valid_eval_range
         self._full_eval_range = self.eval_params._full_eval_range
         self._wb_lst = wb_lst
-    
+
     @property
     def evaluation_range(self) -> 'Tuple[datetime, datetime]':
         return self._eval_range
@@ -106,17 +109,18 @@ class CalibrationSet(Evaluatable):
             fid_index = [list(ncvar['feature_id'][0:]).index(int(fid)) for fid in self._wb_lst]
             self._output = pd.DataFrame(data={'sim_flow': pd.DataFrame(ncvar['flow'][fid_index], index=fid_index).T.sum(axis=1)})
 
-            # Get date 
+            # Get date
             tnx_file = list(Path(self._output_file).parent.glob("nex*.csv"))[0]
             tnx_df = pd.read_csv(tnx_file, index_col=0, parse_dates=[1], names=['ts', 'time', 'Q']).set_index('time')
             dt_range = pd.date_range(tnx_df.index[1], tnx_df.index[-1], len(self._output.index)).round('min')
             self._output.index = dt_range
             self._output.index.name='Time'
-            self._output = self._output.resample('1H').first()
+            self._output = self._output.resample('1h').first()
             hydrograph = self._output
 
         except FileNotFoundError:
             logging.warning("Simulation output {} not found. Current working directory is {}".format(self._output_file, os.getcwd()))
+            logging.warning("This is expected on the first iteration.")
             hydrograph = None
         except Exception as e:
             raise(e)
@@ -143,7 +147,7 @@ class CalibrationSet(Evaluatable):
         """Save the last output to output for iteration i."""
         if os.path.exists(elf._output_file):
             shutil.move(self._output_file, '{}_last'.format(self._output_file))
-    
+
     def check_point(self, path: 'Path') -> None:
         """Save calibration information."""
         for adjustable in self.adjustables:
@@ -160,13 +164,13 @@ class CalibrationSet(Evaluatable):
 
 class UniformCalibrationSet(CalibrationSet, Adjustable):
     """A HY_Features based catchment with additional calibration information/functionality"""
-    def __init__(self, 
+    def __init__(self,
         eval_nexus: Nexus,
-        routing_output: 'Path', 
-        start_time: str, 
-        end_time: str, 
-        eval_params: 'EvaluationOptions', 
-        obsflow_file: 'Path', 
+        routing_output: 'Path',
+        start_time: str,
+        end_time: str,
+        eval_params: 'EvaluationOptions',
+        obsflow_file: 'Path',
         wb_lst: list,
         params: dict = {},
 ) -> None:
@@ -176,7 +180,7 @@ class UniformCalibrationSet(CalibrationSet, Adjustable):
 
         #For now, set this to None so meta update does the right thing
         #at some point, may want to refactor model update to handle this better
-        self._id = None 
+        self._id = None
 
     # Required Adjustable properties
     @property
@@ -192,7 +196,7 @@ class UniformCalibrationSet(CalibrationSet, Adjustable):
         #FIXME re-enable this once more complete
         shutil.move(self._output_file, '{}_last'.format(self._output_file))
 
-    def save_calib_output(self, i, output_iter_file: 'Path', last_output_file: 'Path', calib_path1: 'Path', 
+    def save_calib_output(self, i, output_iter_file: 'Path', last_output_file: 'Path', calib_path1: 'Path',
                          calib_path2: 'Path', calib_path3: Path = None, save_output_iter_flag=False) -> None:
         """Save model output from calibration run.
 
@@ -202,7 +206,7 @@ class UniformCalibrationSet(CalibrationSet, Adjustable):
         output_iter_file : output file at each iteration
         last_output_file : last output file
         calib_path1 : directory to store streamflow file at each iteration
-        calib_path2 : current agent job directory 
+        calib_path2 : current agent job directory
         calib_path3 : directory to store catchment and nexsus output plus other output files, default None
         save_output_iter_flag : whether to save output at each iteration
 
@@ -245,9 +249,9 @@ class UniformCalibrationSet(CalibrationSet, Adjustable):
         Parameters:
         ----------
         run_name : Control or best run
-        valid_path1 : Validation run main directory 
+        valid_path1 : Validation run main directory
         valid_path2 : Validation run job work directory
-        valid_path3 : Subdrirectory under valid_path2 to store output files 
+        valid_path3 : Subdrirectory under valid_path2 to store output files
 
         """
         if os.path.exists(self._output_file):
@@ -289,4 +293,4 @@ class UniformCalibrationSet(CalibrationSet, Adjustable):
         except FileNotFoundError:
             return 0
 
-        return start_iteration 
+        return start_iteration

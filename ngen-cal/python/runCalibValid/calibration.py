@@ -10,7 +10,6 @@ from os import chdir
 from pathlib import Path
 
 import yaml
-from custom_logging import setup_logging
 from ngen.cal.agent import Agent
 from ngen.cal.configuration import General
 from ngen.cal.search import dds, dds_set, gwo_search, pso_search
@@ -77,7 +76,6 @@ def main(general: General, model_conf):
 
 
 if __name__ == "__main__":
-    setup_logging()
     # Create the command line parser
     parser = argparse.ArgumentParser(description="Calibrate catchments in NGEN architecture.")
     parser.add_argument(
