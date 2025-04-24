@@ -48,6 +48,4 @@ from .plot_functions import (
 
 from .validation_run import run_valid_ctrl_best
 
-from .custom_logging import setup_logging
 
-setup_logging()
