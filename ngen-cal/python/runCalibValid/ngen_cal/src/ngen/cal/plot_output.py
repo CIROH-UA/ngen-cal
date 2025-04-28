@@ -105,7 +105,7 @@ def plot_calib_output(
         plotfile = os.path.join(fig_path, calibration_object.basinID + '_scatterplot_streamflow_iteration_' + str('{:04d}').format(i) + '.png')  
     else: 
         plotfile = os.path.join(fig_path, calibration_object.basinID + '_scatterplot_streamflow_iteration.png')  
-    title = 'Scatterplot of Streaflow at Iteration = ' + str(i) + '\n' + calibration_object.station_name
+    title = 'Scatterplot of Streamflow at Iteration = ' + str(i) + '\n' + calibration_object.station_name
     df_merged_copy2 = copy.deepcopy(df_merged)
     plf.scatterplot_streamflow(df_merged_copy2, plotfile, title)
 

@@ -371,7 +371,7 @@ def pbias_fdc(
     y_true_sort = np.sort(y_true, axis=0)[::-1]
     y_pred_sort = np.sort(y_pred, axis=0)[::-1]
 
-    # Compute exceedence probabilities
+    # Compute exceedance probabilities
     y_true_prob = np.arange(1, len(y_true) + 1) / len(y_true)
     y_pred_prob = np.arange(1, len(y_pred) + 1) / len(y_pred)
 

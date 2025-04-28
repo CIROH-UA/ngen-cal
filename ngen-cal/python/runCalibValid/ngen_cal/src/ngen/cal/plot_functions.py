@@ -613,7 +613,7 @@ def plot_fdc_calib(
     # Set common x- and y-axis labels
     fig.add_subplot(111, frameon=False)
     plt.tick_params(labelcolor='none', which='both', top=False, bottom=False, left=False, right=False)
-    plt.xlabel('Exceedence Probability (%)', weight='normal', fontsize=16)
+    plt.xlabel('Exceedance Probability (%)', weight='normal', fontsize=16)
 
     plt.suptitle(title, size=16, weight='bold')
     plt.subplots_adjust(left=0.07, right=0.97, bottom=0.09, top=0.85, wspace=0.05)
@@ -673,7 +673,7 @@ def plot_fdc_valid(
     # Set common x- and y-axis labels
     fig.add_subplot(111, frameon=False)
     plt.tick_params(labelcolor='none', which='both', top=False, bottom=False, left=False, right=False)
-    plt.xlabel('Exceedence Probability (%)', weight='normal', fontsize=16)
+    plt.xlabel('Exceedance Probability (%)', weight='normal', fontsize=16)
     plt.ylabel(r'$\mathsf{Streamflow}\ (\mathsf{m^3}/\mathsf{s})$', weight='normal', fontsize=16)
 
     plt.suptitle(title, size=18, weight='bold')
