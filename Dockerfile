@@ -15,7 +15,7 @@ RUN uv pip install colorama rich
 COPY mpi-ngen /dmod/bin/mpi-ngen
 
 RUN echo "/calibration/.venv/bin/python /calibration/ngen-cal/python/runCalibValid/calibration.py /ngen/ngen/data/calibration/ngen_cal_conf.yaml && \\" >> run.sh
-RUN echo "/calibration/.venv/bin/python /calibration/ngen-cal/python/runCalibValid/validation.py /ngen/ngen/data/calibration/ngen_cal_conf.yaml" >> run.sh
+RUN echo "/calibration/.venv/bin/python /calibration/ngen-cal/python/runCalibValid/validation.py /ngen/ngen/data/calibration/Output/Validation_Run/ngen_cal_conf.yaml" >> run.sh
 
 RUN chmod +x run.sh
 
