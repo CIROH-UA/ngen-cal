@@ -5,10 +5,11 @@ parameter set and validation best run using the best calibrated parameter set.
 """
 
 import argparse
+from copy import deepcopy
 import logging
 from os import chdir
 from pathlib import Path
-
+import shutil
 import yaml
 from logger_config import get_logger, setup_logging
 from ngen.cal.agent import Agent
@@ -16,7 +17,7 @@ from ngen.cal.configuration import General
 from ngen.cal.validation_run import run_valid_ctrl_best
 
 
-def main(general: General, model_conf):
+def main(general: General, model_conf, run_control: bool = True):
     """Main validation function"""
     logger = get_logger(__name__)
     # Seed the random number generators if requested
@@ -29,14 +30,33 @@ def main(general: General, model_conf):
         np.random.seed(general.random_seed)
         logger.debug(f"Set random seed to {general.random_seed}")
 
-    logger.info("Starting Validation Run")
 
+    if run_control:
+        logger.info("Starting Control Run")
+        # Initialize agent
+        logger.debug("Initializing validation agent")
+        original_realization = Path("/ngen/ngen/data/calibration/realization.json")
+        control_realization = Path(general.valid_path) / "control_realization.json"
+        shutil.copy(original_realization, control_realization)
+        control_model_conf = deepcopy(model_conf)
+        control_model_conf["realization"] = control_realization
+        control_general_conf = deepcopy(general)
+        control_general_conf.name = "valid_control"
+        agent = Agent(control_model_conf, control_general_conf.valid_path, control_general_conf, control_general_conf.log, control_general_conf.restart)
+
+        # Execute validation control and best simulation
+        logger.info("Executing validation with best parameters")
+        run_valid_ctrl_best(agent)
+
+        logger.info("Validation process completed")
+
+    logger.info("Starting Validation Run")
     # Initialize agent
     logger.debug("Initializing validation agent")
     agent = Agent(model_conf, general.valid_path, general, general.log, general.restart)
 
     # Execute validation control and best simulation
-    logger.info("Executing validation control and best simulation runs")
+    logger.info("Executing validation with best parameters")
     run_valid_ctrl_best(agent)
 
     logger.info("Validation process completed")

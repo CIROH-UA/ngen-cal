@@ -1,5 +1,5 @@
 """
-This module contains functions to read output files from calibration 
+This module contains functions to read output files from calibration
 and validation runs, and generate a variery of plots.
 
 @author: Xia Feng
@@ -13,15 +13,15 @@ import os
 import subprocess
 from typing import Dict, List, TYPE_CHECKING, Optional, Union
 
-import numpy as np 
-import pandas as pd 
+import numpy as np
+import pandas as pd
 
 import ngen.cal.metric_functions as mf
 import ngen.cal.plot_functions as plf
-
+from pathlib import Path
 if TYPE_CHECKING:
     from ngen.cal.agent import Agent
-    from ngen.cal import Evaluatable  
+    from ngen.cal import Evaluatable
 
 import logging
 
@@ -32,22 +32,22 @@ __all__ = ['plot_calib_output',
 
 
 def plot_calib_output(
-    i: int, 
-    calibration_object: 'Evaluatable', 
-    agent: 'Agent', 
+    i: int,
+    calibration_object: 'Evaluatable',
+    agent: 'Agent',
     eval_range: Optional[List[str]] = None,
 ) -> None:
     """Plot streamflow and other model output as well as metrics for calibration run.
 
     Parameters
     ----------
-    calibration_object : catchment object 
-    meta : meta object 
+    calibration_object : catchment object
+    meta : meta object
     eval_range : evaluation time period for calibration run
 
     Returns
     ----------
-    None 
+    None
 
     """
     # Output files from different runs
@@ -77,11 +77,11 @@ def plot_calib_output(
     dfs1 = [calibration_object.observed, df_control, df_best, df_last]
     df_merged = reduce(lambda left, right: pd.merge(left, right, left_index=True, right_index=True, how='right'), dfs1)
     df_merged = df_merged.rename(columns={'obs_flow': 'Observation'})
-    
+
     # Convert the obsflow in cubic feet per second to cubic meters per second
     df_merged['Observation'] = df_merged['Observation'] * 0.0283168
-    
-    df_merged[['Control Run','Best Run','Last Run']] = df_merged[['Control Run','Best Run','Last Run']] 
+
+    df_merged[['Iteration 0 Run','Best Run','Last Run']] = df_merged[['Control Run','Best Run','Last Run']]
     if df_merged.empty:
         logging.warning("can't merge different runs")
     if eval_range:
@@ -90,35 +90,35 @@ def plot_calib_output(
     df_merged = df_merged.rename(columns={'index': 'Time'})
     df_merged = mf.treat_values(df_merged, remove_neg = True)
     df_merged_copy1 = copy.deepcopy(df_merged)
-     
+
     # Plot hydrograph
     fig_path = agent.plot_iter_path
     if calibration_object.save_plot_iter_flag:
-        plotfile = os.path.join(fig_path, calibration_object.basinID + '_hydrograph_iteration_' + str('{:04d}').format(i) + '.png')  
-    else: 
-        plotfile = os.path.join(fig_path, calibration_object.basinID + '_hydrograph_iteration.png')  
+        plotfile = os.path.join(fig_path, calibration_object.basinID + '_hydrograph_iteration_' + str('{:04d}').format(i) + '.png')
+    else:
+        plotfile = os.path.join(fig_path, calibration_object.basinID + '_hydrograph_iteration.png')
     title  = 'Hydrograph at Iteration = ' + str(i) + '\n' + calibration_object.station_name
     plf.plot_streamflow(df_merged_copy1, plotfile, title)
 
     # Plot scatterplot of streamflow from observation and other runs
     if calibration_object.save_plot_iter_flag:
-        plotfile = os.path.join(fig_path, calibration_object.basinID + '_scatterplot_streamflow_iteration_' + str('{:04d}').format(i) + '.png')  
-    else: 
-        plotfile = os.path.join(fig_path, calibration_object.basinID + '_scatterplot_streamflow_iteration.png')  
+        plotfile = os.path.join(fig_path, calibration_object.basinID + '_scatterplot_streamflow_iteration_' + str('{:04d}').format(i) + '.png')
+    else:
+        plotfile = os.path.join(fig_path, calibration_object.basinID + '_scatterplot_streamflow_iteration.png')
     title = 'Scatterplot of Streamflow at Iteration = ' + str(i) + '\n' + calibration_object.station_name
     df_merged_copy2 = copy.deepcopy(df_merged)
     plf.scatterplot_streamflow(df_merged_copy2, plotfile, title)
 
     # Plot flow duration curve from observation and other runs
     if calibration_object.save_plot_iter_flag:
-        plotfile = os.path.join(fig_path, calibration_object.basinID + '_fdc_iteration_' + str('{:04d}').format(i) + '.png')  
-    else: 
-        plotfile = os.path.join(fig_path, calibration_object.basinID + '_fdc_iteration.png')  
+        plotfile = os.path.join(fig_path, calibration_object.basinID + '_fdc_iteration_' + str('{:04d}').format(i) + '.png')
+    else:
+        plotfile = os.path.join(fig_path, calibration_object.basinID + '_fdc_iteration.png')
     title  = 'Flow Duration Curve at Iteration = ' + str(i) + '\n' + calibration_object.station_name
     df_merged_copy3 = copy.deepcopy(df_merged)
     plf.plot_fdc_calib(df_merged_copy3, plotfile, title)
 
-    # Plot time series of streamflow and precipitation 
+    # Plot time series of streamflow and precipitation
     if calibration_object.save_plot_iter_flag:
         plotfile = os.path.join(fig_path, calibration_object.basinID + '_streamflow_precip_iteration_' + str('{:04d}').format(i) + '.png')
     else:
@@ -129,40 +129,48 @@ def plot_calib_output(
 
     # Plot scatterplot between objective function and iteration
     if calibration_object.save_plot_iter_flag:
-        plotfile = os.path.join(fig_path, calibration_object.basinID + '_objfun_iteration_' + str('{:04d}').format(i) +'.png')  
+        plotfile = os.path.join(fig_path, calibration_object.basinID + '_objfun_iteration_' + str('{:04d}').format(i) +'.png')
     else:
-        plotfile = os.path.join(fig_path, calibration_object.basinID + '_objfun_iteration.png')  
+        plotfile = os.path.join(fig_path, calibration_object.basinID + '_objfun_iteration.png')
     title  = 'Scatterplot of Objective Function vs Iteration ' + '\n' + calibration_object.station_name
     plf.scatterplot_objfun(calibration_object.metric_iter_file, plotfile, "objFunVal", int(calibration_object.best_params), title)
 
     # Plot scatterplot between metrics and iteration
     if calibration_object.save_plot_iter_flag:
-        plotfile = os.path.join(fig_path, calibration_object.basinID + '_metric_iteration_' + str('{:04d}').format(i) +'.png')  
-    else: 
-        plotfile = os.path.join(fig_path, calibration_object.basinID + '_metric_iteration.png')  
+        plotfile = os.path.join(fig_path, calibration_object.basinID + '_metric_iteration_' + str('{:04d}').format(i) +'.png')
+    else:
+        plotfile = os.path.join(fig_path, calibration_object.basinID + '_metric_iteration.png')
     title  = 'Scatterplot of Metrics vs Iteration ' + '\n' + calibration_object.station_name
-    plf.scatterplot_var(calibration_object.metric_iter_file, plotfile, int(calibration_object.best_params), title)    
+    plf.scatterplot_var(calibration_object.metric_iter_file, plotfile, int(calibration_object.best_params), title)
 
     # Plot scatterplot between metrics and objective function
     if calibration_object.save_plot_iter_flag:
-        plotfile = os.path.join(fig_path, calibration_object.basinID + '_metric_objfun_' + str('{:04d}').format(i) +'.png')  
+        plotfile = os.path.join(fig_path, calibration_object.basinID + '_metric_objfun_' + str('{:04d}').format(i) +'.png')
     else:
-        plotfile = os.path.join(fig_path, calibration_object.basinID + '_metric_objfun.png')  
+        plotfile = os.path.join(fig_path, calibration_object.basinID + '_metric_objfun.png')
     title  = 'Scatterplot of Metrics vs Objectiv Function ' + '\n' + calibration_object.station_name
-    plf.scatterplot_objfun_metric(calibration_object.metric_iter_file, plotfile, int(calibration_object.best_params), title)    
+    plf.scatterplot_objfun_metric(calibration_object.metric_iter_file, plotfile, int(calibration_object.best_params), title)
 
     # Plot scatterplot between parameters and iteration
     if calibration_object.save_plot_iter_flag:
-        plotfile = os.path.join(fig_path, calibration_object.basinID + '_param_iteration_' + str('{:04d}').format(i) +'.png')  
+        plotfile = os.path.join(fig_path, calibration_object.basinID + '_param_iteration_' + str('{:04d}').format(i) +'.png')
     else:
-        plotfile = os.path.join(fig_path, calibration_object.basinID + '_param_iteration.png')  
+        plotfile = os.path.join(fig_path, calibration_object.basinID + '_param_iteration.png')
     title  = 'Scatterplot of Parameters vs Iteration ' + '\n' + calibration_object.station_name
-    plf.scatterplot_var(calibration_object.param_iter_file, plotfile, int(calibration_object.best_params), title)    
+    plf.scatterplot_var(calibration_object.param_iter_file, plotfile, int(calibration_object.best_params), title)
 
     # Plot scatterplot between parameters and iteration
     if agent.algorithm !='dds':
-        plf.scatterplot_var(calibration_object.param_iter_file, plotfile, int(calibration_object.best_params), title)    
+        plf.scatterplot_var(calibration_object.param_iter_file, plotfile, int(calibration_object.best_params), title)
         plot_cost_func(calibration_object, agent, os.path.join(agent.workdir, calibration_object.cost_iter_file), agent.algorithm, calib_iter=False)
+
+def search_for_control(directory: Path, gage_id: str):
+    results = []
+    results =  list(directory.rglob(f"./Calibration_Run/ngen_*_worker/Output_Iteration/{gage_id}_output_iteration_0000.csv"))
+    if len(results) == 0:
+        raise FileNotFoundError(f"No control file found for {gage_id} in {directory}")
+    most_recent = max(results, key=lambda f: f.stat().st_mtime)
+    return most_recent
 
 def plot_valid_output(
     calibration_object: 'Evaluatable',
@@ -173,9 +181,9 @@ def plot_valid_output(
 
     Parameters
     ----------
-    calibration_object : catchment object 
-    calibration_object : calibration_object object 
-    time_period : calib, valid and full time periods 
+    calibration_object : catchment object
+    calibration_object : calibration_object object
+    time_period : calib, valid and full time periods
 
     Returns
     ----------
@@ -183,11 +191,17 @@ def plot_valid_output(
 
     """
     # Output files from different validation runs
-    control_run = os.path.join(agent.valid_path, calibration_object.basinID + '_output_valid_control.csv')
+    control_output = Path(agent.valid_path, calibration_object.basinID + '_output_valid_control.csv')
+    if not control_output.exists():
+        control_output = search_for_control(Path(agent.valid_path).parent, calibration_object.basinID)
+
+
+    df_control_run = pd.read_csv(control_output)
+
     best_run = os.path.join(agent.valid_path, calibration_object.basinID + '_output_valid_best.csv')
 
     # Read output
-    df_control_run = pd.read_csv(control_run)
+
     df_control_run['Time'] = pd.DatetimeIndex(df_control_run['Time'])
     df_control = df_control_run[['Time', calibration_object.streamflow_name]]
     df_control = df_control.rename(columns={calibration_object.streamflow_name: 'Control Run'})
@@ -204,8 +218,8 @@ def plot_valid_output(
     df_merged = df_merged.rename(columns={'obs_flow': 'Observation'})
     # Convert the obsflow in cubic feet per second to cubic meters per second
     df_merged['Observation'] = df_merged['Observation'] * 0.0283168
-    
-    df_merged[['Control Run','Best Run']] = df_merged[['Control Run','Best Run']] 
+
+    df_merged[['Control Run','Best Run']] = df_merged[['Control Run','Best Run']]
     df_merged.reset_index(inplace=True)
     df_merged = df_merged.rename(columns={'index': 'Time'})
     df_merged = mf.treat_values(df_merged, remove_neg = True)
@@ -224,11 +238,11 @@ def plot_valid_output(
     title  = 'Flow Duration Curve during Calibration and Validation period'  + '\n' + calibration_object.station_name
     plf.plot_fdc_valid(df_merged_copy2, plotfile, title, time_period)
 
-    # Plot time series of streamflow and precipitation 
+    # Plot time series of streamflow and precipitation
     df_merged_copy3 = copy.deepcopy(df_merged)
     plotfile = os.path.join(fig_path, calibration_object.basinID + '_streamflow_precip_valid_run.png')
     title  = 'Streamflow and Total Precipitation during Calibration and Validation Period ' + '\n' + calibration_object.station_name
-    plf.plot_streamflow_precipitation(df_merged_copy3, agent.df_precip, plotfile, title, calibration_object.evaluation_range[0], 
+    plf.plot_streamflow_precipitation(df_merged_copy3, agent.df_precip, plotfile, title, calibration_object.evaluation_range[0],
         calibration_object.evaluation_range[1], calibration_object.valid_evaluation_range[0], calibration_object.valid_evaluation_range[1])
 
     # Plot metrics
@@ -242,18 +256,18 @@ def plot_valid_output(
     plf.barplot_metric(mdf, plotfile, title)
 
 def plot_cost_func(
-    calibration_object: 'Evaluatable', 
-    agent: 'Agent', 
-    cost_hist_file: Union[str, os.PathLike], 
-    algorithm: str, 
+    calibration_object: 'Evaluatable',
+    agent: 'Agent',
+    cost_hist_file: Union[str, os.PathLike],
+    algorithm: str,
     calib_iter: Optional[bool] = False,
-) -> None: 
+) -> None:
     """Plot convergence curve.
 
     Parameters
     ----------
-    calibration_object : Evaluatable object 
-    agent : Agent object 
+    calibration_object : Evaluatable object
+    agent : Agent object
     cost_hist_file : File containing global best and local best ost function values at each iteration
     algorithm : Optimzation algorithm
     calib_iter : Whether plot for each iteration or after all iterations are finished, default False

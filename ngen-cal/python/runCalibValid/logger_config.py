@@ -24,7 +24,13 @@ class ColoredFormatter(logging.Formatter):
         if record.levelno == logging.CRITICAL or record.levelno == logging.ERROR:
             return f"{Fore.RED}{message}{Style.RESET_ALL}"
         if record.name == "root":  # Only color info messages from this script green
-            return f"{Fore.GREEN}{message}{Style.RESET_ALL}"
+            level = " - ".join(message.split(" - ")[:2])
+            contents = " - ".join(message.split(" - ")[2:])
+            if "Plotting" in contents:
+                return (
+                    f"{Fore.GREEN}{level}{Style.RESET_ALL} - {Fore.BLUE}{contents}{Style.RESET_ALL}"
+                )
+            return f"{Fore.GREEN}{level}{Style.RESET_ALL} - {contents}"
         return message
 
 
