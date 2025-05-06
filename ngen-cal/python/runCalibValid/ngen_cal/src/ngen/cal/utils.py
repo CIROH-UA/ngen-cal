@@ -9,8 +9,45 @@ from email.mime.text import MIMEText
 from os import getcwd, chdir, PathLike
 import smtplib
 from typing import Union
+from time import sleep
+import subprocess
+import threading
 
 import logging
+
+from rich.live import Live
+from rich.panel import Panel
+
+
+def _generate_panel(log_file: str, n_lines: int = 10) -> Panel:
+    tail_output = subprocess.check_output(f"tail -n {n_lines} {log_file}", shell=True).decode("utf-8")
+    panel = Panel(tail_output.strip())
+    return panel
+
+class LiveLogPanel:
+    def __init__(self, log_file: str, n_lines: int = 10):
+        self.log_file = log_file
+        self.n_lines = n_lines
+        self.stop_threads = False
+        self.thread = threading.Thread(target=self.tail_logfile, args=(log_file, n_lines), name="console_log")
+        self.thread.start()
+
+    def tail_logfile(self, log_file: str, n_lines: int = 10):
+        with Live(_generate_panel(log_file, n_lines), refresh_per_second=4) as live:
+            while not self.stop_threads:
+                sleep(1)
+                live.update(_generate_panel(log_file, n_lines))
+
+    def stop(self):
+        self.stop_threads = True
+        self.thread.join()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop()
+
 
 @contextmanager
 def pushd(path: Union[str, PathLike]) -> None:
@@ -18,7 +55,7 @@ def pushd(path: Union[str, PathLike]) -> None:
 
     Parameters
     ----------
-    path : New directory path 
+    path : New directory path
 
     Returns
     ----------
@@ -31,7 +68,7 @@ def pushd(path: Union[str, PathLike]) -> None:
     # Change the directory
     chdir(path)
     try:
-        yield 
+        yield
     finally:
         chdir(cwd)
 
@@ -43,8 +80,8 @@ def complete_msg(basinid: str, run_name: str, path: Union[str, PathLike]=None, u
         ----------
         basinid : Basin ID
         run_name : Calibration or validation run
-        path : Work directory 
-        user_email : User email address 
+        path : Work directory
+        user_email : User email address
 
         Returns
         ----------
@@ -53,7 +90,7 @@ def complete_msg(basinid: str, run_name: str, path: Union[str, PathLike]=None, u
         """
         if user_email:
             subject = run_name.capitalize()  + ' Run for {}'.format(basinid) + ' Is Completed'
-            content = subject + ' at ' + path if path else subject 
+            content = subject + ' at ' + path if path else subject
             msg = MIMEText(content)
             msg['Subject'] = subject
             msg['From'] = 'foo@example.com'

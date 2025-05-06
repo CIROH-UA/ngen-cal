@@ -81,7 +81,7 @@ def plot_calib_output(
     # Convert the obsflow in cubic feet per second to cubic meters per second
     df_merged['Observation'] = df_merged['Observation'] * 0.0283168
 
-    df_merged[['Iteration 0 Run','Best Run','Last Run']] = df_merged[['Control Run','Best Run','Last Run']]
+    df_merged[['Control Run','Best Run','Last Run']] = df_merged[['Control Run','Best Run','Last Run']]
     if df_merged.empty:
         logging.warning("can't merge different runs")
     if eval_range:

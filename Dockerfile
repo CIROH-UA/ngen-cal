@@ -26,5 +26,5 @@ RUN mkdir -p /.config/
 RUN mkdir -p /.cache/
 RUN chmod -R 777 /.config/
 RUN chmod -R 777 /.cache/
-ENV PS1="ngiab-cal\[\033[01;32m\]@demo\[\033[00m\]:\[\033[01;35m\]\w\[\033[00m\]$"
+ENV PS1="ngiab-cal\[\033[01;32m\]@demo\[\033[00m\]:\[\033[01;35m\]\w\[\033[00m\]$ "
 ENTRYPOINT [ "/bin/bash" ]

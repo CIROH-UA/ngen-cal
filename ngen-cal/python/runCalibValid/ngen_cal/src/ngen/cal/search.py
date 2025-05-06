@@ -10,6 +10,7 @@ from math import log
 from multiprocessing import pool
 import os
 import subprocess
+import threading
 from datetime import datetime
 from typing import Dict, Optional, Tuple, TYPE_CHECKING
 
@@ -21,7 +22,9 @@ import logging
 from .gwo_global_best import GlobalBestGWO
 from .metric_functions import treat_values, calculate_all_metrics
 from .plot_output import plot_calib_output, plot_cost_func
-from .utils import pushd, complete_msg 
+from .utils import pushd, complete_msg, LiveLogPanel
+
+
 
 if TYPE_CHECKING:
     from ngen.cal import Adjustable, Evaluatable
@@ -36,9 +39,11 @@ managed by a calibration agent.
 """
 __iteration_counter = 1
 
+# def tail_logfile(log_file: str, n_lines: int = 10) -> str:
+#     os.system(f"tail -f {logfile}")
 
 def _execute(meta: 'Agent', i: int = None) -> None:
-    """Execute model run via BMI. 
+    """Execute model run via BMI.
 
     Parameters
     ----------
@@ -56,21 +61,22 @@ def _execute(meta: 'Agent', i: int = None) -> None:
         if i is not None:
             with open(run_log_file, 'a+') as log_file:
                 log_file.write('------ Iteration = {}'.format(i) + ' ------\n')
-        with open(run_log_file, 'a+') as log_file:
-            subprocess.check_call(meta.cmd, stdout=log_file, stderr=log_file, shell=True, cwd=meta.job.workdir)
+        with LiveLogPanel(run_log_file) as live_log_panel:
+            with open(run_log_file, 'a+') as log_file:
+                subprocess.check_call(meta.cmd, stdout=log_file, stderr=log_file, shell=True, cwd=meta.job.workdir)
 
 def _calc_metrics(
-    simulated_hydrograph: pd.Series, 
-    observed_hydrograph: pd.Series, 
-    eval_range: Tuple[datetime, datetime] = None, 
+    simulated_hydrograph: pd.Series,
+    observed_hydrograph: pd.Series,
+    eval_range: Tuple[datetime, datetime] = None,
     threshold: Optional[float] = None,
 ) -> Dict[str, float]:
     """Calculate statistical metrics.
 
     Parameters
     ----------
-    simulated_hydrograph : Time series of simulated streamflow 
-    observed_hydrograph : Time series of observed streamflow 
+    simulated_hydrograph : Time series of simulated streamflow
+    observed_hydrograph : Time series of observed streamflow
     eval_range : Evaluation time period for calibration run
     threshold : Streamflow threshold for calculating categorical scores
 
@@ -93,26 +99,26 @@ def _calc_metrics(
     return calculate_all_metrics(obsflow, simflow, threshold)
 
 def _evaluate(i: int, calibration_object: 'Evaluatable', agent: 'Agent', info: bool=False) -> float:
-    """ Calculate objective function and evaluation metrics. 
-    Save calibration output and generate plots during iteration. 
+    """ Calculate objective function and evaluation metrics.
+    Save calibration output and generate plots during iteration.
 
     parameters
     ----------
     i : current iteration
     calibration_object : Adjustable object
     agent : Agent object
-    info : whether to print objective, best objective and best parameter to screen, default False 
+    info : whether to print objective, best objective and best parameter to screen, default False
 
     Returns
     ----------
     Objection funciton at current iteration
- 
+
     """
     # Calculate objective function and metrics
     metrics = _calc_metrics(calibration_object.output, calibration_object.observed, calibration_object.evaluation_range, calibration_object.threshold)
-    metric_objective_function = metrics[calibration_object.objective.value.upper()] 
-    score = 1 - metric_objective_function if calibration_object.target == 'min' else metric_objective_function 
-      
+    metric_objective_function = metrics[calibration_object.objective.value.upper()]
+    score = 1 - metric_objective_function if calibration_object.target == 'min' else metric_objective_function
+
     # Update based on latest objective function and write log files
     calibration_object.update(i, score, log=True, algorithm=agent.algorithm)
     if info:
@@ -126,7 +132,7 @@ def _evaluate(i: int, calibration_object: 'Evaluatable', agent: 'Agent', info: b
     calibration_object.write_param_iter_file(i, calibration_object.df[[str(i),'param']])
 
     # Save output
-    calibration_object.save_calib_output(i, str(calibration_object.output_iter_file), str(calibration_object.last_output_file), agent.output_iter_path, 
+    calibration_object.save_calib_output(i, str(calibration_object.output_iter_file), str(calibration_object.last_output_file), agent.output_iter_path,
                                          agent.job.workdir, agent.calib_path_output, calibration_object.save_output_iter_flag)
     calibration_object.save_best_output(str(calibration_object.best_output_file), calibration_object.best_save_flag)
 
@@ -146,13 +152,13 @@ def _evaluate(i: int, calibration_object: 'Evaluatable', agent: 'Agent', info: b
     return score
 
 def dds_update(iteration: int, inclusion_probability: float, calibration_object: 'Adjustable', agent: 'Agent') -> None:
-    """ Dynamically dimensioned search optimization algorithm. 
+    """ Dynamically dimensioned search optimization algorithm.
 
     parameters
     ----------
     iteration : Current iteration
-    inclusion_probability : Probability of each parameter included in neighborhood 
-    calibration_object : Adjustable object 
+    inclusion_probability : Probability of each parameter included in neighborhood
+    calibration_object : Adjustable object
     agent : Agent object
 
     """
@@ -162,7 +168,7 @@ def dds_update(iteration: int, inclusion_probability: float, calibration_object:
         neighborhood = calibration_object.variables.sample(n=1)
     logging.debug( "neighborhood:\n{}".format(neighborhood) )
 
-    # Generate new parameter set by perturbng the best parameters  
+    # Generate new parameter set by perturbng the best parameters
     calibration_object.df[str(iteration)] = calibration_object.df[agent.best_params]
     for n in neighborhood:
         new = calibration_object.df.loc[n, agent.best_params] + calibration_object.df.loc[n, 'sigma']*np.random.normal(0,1)
@@ -178,10 +184,10 @@ def dds_update(iteration: int, inclusion_probability: float, calibration_object:
                 new = upper
         calibration_object.df.loc[n, str(iteration)] = new
 
-    # Fill parameters for all formulations with unique parameter 
+    # Fill parameters for all formulations with unique parameter
     calibration_object.df_fill(iteration)
 
-    # Update realization config file with new parameters 
+    # Update realization config file with new parameters
     agent.update_config(iteration, calibration_object.adf[[str(iteration), 'param', 'model']], calibration_object.id)
 
 def dds(start_iteration: int, iterations: int,  calibration_object: 'Evaluatable', agent: 'Agent')->None:
@@ -219,7 +225,7 @@ def dds(start_iteration: int, iterations: int,  calibration_object: 'Evaluatable
         # Calculate probability of inclusion
         inclusion_probability = 1 - log(i)/log(iterations)
         dds_update(i, inclusion_probability, calibration_object, agent)
-        # Run cmd 
+        # Run cmd
         logging.info("Running {} for iteration {}".format(agent.cmd, i))
         _execute(agent, i)
         with pushd(agent.job.workdir):
@@ -272,7 +278,7 @@ def dds_set(start_iteration: int, iterations: int, agent: 'Agent')->None:
             for calibration_object in calibration_set.adjustables:
                 dds_update(i, inclusion_probability, calibration_object, agent)
 
-            # Execute model run 
+            # Execute model run
             logging.info("Running {} for iteration {}".format(agent.cmd, i))
             _execute(agent, i)
             with pushd(agent.job.workdir):
@@ -293,12 +299,12 @@ def compute(calibration_object: 'Adjustable', iteration: int, input: Tuple) -> f
     ----------
     calibration_object : Adjustable object
     iteration : starting iteration
-    input : Agent and associated parameters 
+    input : Agent and associated parameters
 
     """
     params = input[0]
     agent = input[1]
-    
+
     # Execute run with the updated parameter set and evaluate objective function
     calibration_object.df[str(iteration)] = params
     with pushd(agent.job.workdir):
@@ -331,13 +337,13 @@ def cost_func( calibration_object: 'Adjustable', agents: 'Agent', pool: int, par
     return costs
 
 def pso_search(start_iteration: int, iterations: int,  agent: 'Agent') -> None:
-    """Search optimal parameter set using PSO algorithm. 
+    """Search optimal parameter set using PSO algorithm.
 
     parameters
     ----------
     start_iteration : starting iteration
-    iterations : total number of iterations 
-    agent : Agent object 
+    iterations : total number of iterations
+    agent : Agent object
 
     """
     import pyswarms as ps
@@ -391,7 +397,7 @@ def pso_search(start_iteration: int, iterations: int,  agent: 'Agent') -> None:
         logging.info("Best params with cost {}:".format(cost))
         logging.debug(calibration_object.df[['param','global_best']].set_index('param'))
 
-        # Save and plot history  
+        # Save and plot history
         cost_hist_file = calibration_object.write_hist_file(optimizer, agent, calibration_object.df)
         plot_cost_func(calibration_object, agent, cost_hist_file, agent.algorithm)
 
@@ -401,18 +407,18 @@ def pso_search(start_iteration: int, iterations: int,  agent: 'Agent') -> None:
         calibration_object.adf['global_best'] = calibration_object.adf[str(iterations)]
         calibration_object.create_valid_realization_file(agent, calibration_object.adf)
 
-        # Indicate completion 
+        # Indicate completion
         calibration_object.write_run_complete_file(agent.run_name, agent.workdir)
         complete_msg(calibration_object.basinID, agent.run_name, agent.workdir, calibration_object.user)
 
 def gwo_search(start_iteration: int, iterations: int,  agent)->None:
-    """Search optimal parameter set using GWO algorithm.  
+    """Search optimal parameter set using GWO algorithm.
 
     parameters
     ----------
     start_iteration : start iteration
-    iterations : total number of iterations 
-    agent : Agent object 
+    iterations : total number of iterations
+    agent : Agent object
 
     """
     global __iteration_counter
@@ -443,7 +449,7 @@ def gwo_search(start_iteration: int, iterations: int,  agent)->None:
         bounds = calibration_object.bounds
         bounds = (bounds[0].values, bounds[1].values)
 
-        # Initialize swarms 
+        # Initialize swarms
         optimizer = GlobalBestGWO(n_particles=num_particles, dimensions=len(calibration_object.df), bounds=bounds, start_iter=start_iteration,
                                   calib_path=agent.calib_path, basinid=calibration_object.basinID)
         cf = partial(cost_func, calibration_object, agents, _pool)
