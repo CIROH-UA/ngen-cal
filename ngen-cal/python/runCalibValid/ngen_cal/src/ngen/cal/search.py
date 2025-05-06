@@ -211,6 +211,7 @@ def dds(start_iteration: int, iterations: int,  calibration_object: 'Evaluatable
     agent.update_config(init, calibration_object.df[[str(init), 'param', 'model']], calibration_object.id)
 
     # Produce baseline simulation output using the default parameter set
+    start = datetime.now()
     if start_iteration == 0:
         if calibration_object.output is None:
             logging.info("Running {} to produce initial simulation".format(agent.cmd))
@@ -220,13 +221,14 @@ def dds(start_iteration: int, iterations: int,  calibration_object: 'Evaluatable
             _evaluate(0, calibration_object, agent, info=True)
         calibration_object.check_point(agent.job.workdir)
         start_iteration += 1
-
     for i in range(start_iteration, iterations+1):
         # Calculate probability of inclusion
         inclusion_probability = 1 - log(i)/log(iterations)
         dds_update(i, inclusion_probability, calibration_object, agent)
-        # Run cmd
-        logging.info("Running {} for iteration {}".format(agent.cmd, i))
+        elapsed = abs(datetime.now() - start)
+        remaining = (elapsed/i) * ((iterations+1)-i)
+        logging.debug("Running {}".format(agent.cmd))
+        logging.info("Iteration {}/{} Time elapsed: {}, estimated remaining: {}".format(i, iterations, elapsed, remaining))
         _execute(agent, i)
         with pushd(agent.job.workdir):
             _evaluate(i, calibration_object, agent)
@@ -262,6 +264,7 @@ def dds_set(start_iteration: int, iterations: int, agent: 'Agent')->None:
             agent.update_config(init, calibration_object.adf[[str(init), 'param', 'model']], calibration_object.id)
 
         # Produce baseline simulation output using the default parameter set
+        start = datetime.now()
         if start_iteration == 0:
             logging.debug(calibration_set.output)
             if calibration_set.output is None:
@@ -279,7 +282,10 @@ def dds_set(start_iteration: int, iterations: int, agent: 'Agent')->None:
                 dds_update(i, inclusion_probability, calibration_object, agent)
 
             # Execute model run
-            logging.info("Running {} for iteration {}".format(agent.cmd, i))
+            elapsed = abs(datetime.now() - start)
+            remaining = (elapsed/i) * ((iterations+1)-i)
+            logging.debug("Running {}".format(agent.cmd))
+            logging.info("Iteration {}/{} Time elapsed: {}, estimated remaining: {}".format(i, iterations, elapsed, remaining))
             _execute(agent, i)
             with pushd(agent.job.workdir):
                 _evaluate(i, calibration_set, agent)

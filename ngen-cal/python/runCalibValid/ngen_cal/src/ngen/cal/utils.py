@@ -20,8 +20,9 @@ from rich.panel import Panel
 
 
 def _generate_panel(log_file: str, n_lines: int = 10) -> Panel:
-    tail_output = subprocess.check_output(f"tail -n {n_lines} {log_file}", shell=True).decode("utf-8")
-    panel = Panel(tail_output.strip())
+    tail_cmd = f"tail -n {n_lines} {log_file}"
+    tail_output = subprocess.check_output(tail_cmd, shell=True).decode("utf-8")
+    panel = Panel(tail_output.strip(), title="ngen simulation live output", subtitle=tail_cmd)
     return panel
 
 class LiveLogPanel:
@@ -37,6 +38,7 @@ class LiveLogPanel:
             while not self.stop_threads:
                 sleep(1)
                 live.update(_generate_panel(log_file, n_lines))
+            live.update(_generate_panel(log_file, 4))
 
     def stop(self):
         self.stop_threads = True
