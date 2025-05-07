@@ -9,8 +9,7 @@ COPY ngen-cal /calibration/ngen-cal
 RUN chmod -R 777 /calibration/ngen-cal
 RUN uv pip install -e ngen-cal/python/runCalibValid/ngen_cal
 RUN uv pip install -e ngen-cal/python/runCalibValid/ngen_conf
-RUN uv pip install numpy==1.26.0 netCDF4 geopandas==1.* xarray
-RUN uv pip install colorama rich
+RUN uv pip install numpy==1.26.0 netCDF4 geopandas==1.* xarray colorama rich
 
 COPY mpi-ngen /dmod/bin/mpi-ngen
 
@@ -26,5 +25,6 @@ RUN mkdir -p /.config/
 RUN mkdir -p /.cache/
 RUN chmod -R 777 /.config/
 RUN chmod -R 777 /.cache/
+USER 1000:1000
 ENV PS1="ngiab-cal\[\033[01;32m\]@demo\[\033[00m\]:\[\033[01;35m\]\w\[\033[00m\]$ "
 ENTRYPOINT [ "/bin/bash" ]
