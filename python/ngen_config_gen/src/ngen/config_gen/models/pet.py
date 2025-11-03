@@ -46,20 +46,20 @@ class Pet:
         """
         if version != "2.0":
             raise RuntimeError("only support v2 hydrofabric")
-        
+
         x_data = data.get("X",None)
         if x_data is None: x_data = data.get("centroid_x",None)
-        if x_data is None: raise Exception(f"Neither X nor centroid_x were found in attributes")           
+        if x_data is None: raise Exception(f"Neither X nor centroid_x were found in attributes")
         self.data["longitude_degrees"] = x_data
 
         x_data = data.get("Y",None)
         if x_data is None: x_data = data.get("centroid_y",None)
-        if x_data is None: raise Exception(f"Neither Y nor centroid_y were found in attributes") 
+        if x_data is None: raise Exception(f"Neither Y nor centroid_y were found in attributes")
         self.data["latitude_degrees"] = x_data
 
         x_data = data.get("elevation_mean",None)
         if x_data is None: x_data = data.get("mean.elevation",None)
-        if x_data is None: raise Exception(f"Neither elevation_mean nor mean.elevation were found in attributes") 
+        if x_data is None: raise Exception(f"Neither elevation_mean nor mean.elevation were found in attributes")
         self.data["site_elevation_m"] = x_data
 
     def _v2_defaults(self) -> None:
