@@ -84,9 +84,14 @@ class Cfe:
         )
 
         # this factor (0-1) modifies the gradient of the hydraulic head at the soil bottom. 0=no-flow.
-        x_data = data.get("mean.slope",None)
-        if x_data is None: x_data = data.get("slope",None)
-        if x_data is None: raise Exception(f"Neither mean.slope nor slope were found in attributes")
+        if version.startswith("1"):
+            x_data = data.get("mean.slope",None)
+            if x_data is None: x_data = data.get("slope",None)
+            if x_data is None: raise Exception(f"Neither mean.slope nor slope were found in attributes")
+        else:
+            x_data = data.get("mean.slope_1km",None)
+            if x_data is None: x_data = data.get("slope_1km",None)
+            if x_data is None: raise Exception(f"Neither mean.slope_1km nor slope_1km were found in attributes")
         self.data["soil_params_slop"] = FloatUnitPair(value=x_data, unit=M_PER_M)
 
         # saturated soil moisture content
