@@ -11,6 +11,7 @@ from ngen.config.soil_moisture_profile import SoilMoistureProfile
 from ngen.config.topmod import Topmod
 from ngen.config.lstm import LSTM
 from ngen.config.lstm_rust import LSTM_Rust
+from ngen.config.dhbv2 import dHBV2
 from ngen.config.multi import MultiBMI
 
 # set the workdir relative to this test config
@@ -152,6 +153,16 @@ def lstm_rust_params():
     }
     return data
 
+@pytest.fixture
+def dhbv2_params():
+    path = _workdir.joinpath("data/dne/")
+    data = {
+        "model_type_name": "DeltaModelBmi",
+        "name": "bmi_python",
+        "config_prefix": path,
+        "config": "{{id}}_config.txt",
+    }
+    return data
 
 @pytest.fixture
 def lgar_params():
@@ -224,6 +235,9 @@ def lstm(lstm_params):
 def lstm_rust(lstm_rust_params):
     return LSTM_Rust(**lstm_rust_params)
 
+@pytest.fixture
+def dhbv2(dhbv2_params):
+    return dHBV2(**dhbv2_params)
 
 @pytest.fixture
 def lgar(lgar_params):

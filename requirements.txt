@@ -4,10 +4,11 @@ pytest
 pytest-mock
 pyarrow
 tables #for hdf5 reading
-pandas~=1.1.2
+pandas
 geopandas
 flake8
 matplotlib
 git+https://github.com/noaa-owp/hypy@master#egg=hypy&subdirectory=python
 hydrotools.nwis_client
 hydrotools.metrics
+aiohttp==3.13.5
