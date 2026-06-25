@@ -83,3 +83,4 @@ dist/
 *temp/
 
 # Other
+.vscode/
