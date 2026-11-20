@@ -100,7 +100,9 @@ class Cfe:
         if x_data is None:
             x_data = data.get("slope", None)
         if x_data is None:
-            raise Exception(f"Neither mean.slope nor slope were found in attributes")
+            raise Exception(
+                f"Neither mean.slope_1km nor slope were found in attributes"
+            )
         self.data["soil_params_slop"] = FloatUnitPair(value=x_data, unit=M_PER_M)
 
         # saturated soil moisture content
